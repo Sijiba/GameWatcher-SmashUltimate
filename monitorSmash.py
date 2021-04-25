@@ -63,17 +63,18 @@ def keep_score_in_smash(capture_index=0):
             knowsWinner = True
             winner = 1
 
+    winStr = "P" + str(winner)
+    print(winStr + " wins!")
+    winnerPath = "sharedInfo/" + winStr + ".txt"
+    increment_file(winnerPath)
+    increment_file("sharedInfo/gameCount.txt")
+
     # wait for screen to blank
     while not screenBlanked:
         ret, frame = vid.read()
         if cv2.countNonZero(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)) == 0:
             screenBlanked = True
 
-    increment_file("sharedInfo/gameCount.txt")
-    winStr = "P" + str(winner)
-    print(winStr + " wins!")
-    winnerPath = "sharedInfo/" + winStr + ".txt"
-    increment_file(winnerPath)
 
     # After the loop release the cap object
     vid.release()
