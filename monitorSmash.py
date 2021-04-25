@@ -2,10 +2,9 @@
 import cv2
 import numpy as np
 import sys
-import time
 
 
-def init_scoreFiles():
+def init_score_files():
     f = open("sharedInfo/gameCount.txt", "w")
     f.write(str(0))
     f.close()
@@ -33,9 +32,6 @@ def increment_file(path):
 
 
 def keep_score_in_smash(capture_index=0):
-    targetImg1 = cv2.imread("images/bottomLeftCorner.png")
-    bottomleftSizeX = int(targetImg1.shape[1])
-    bottomleftSizeY = int(targetImg1.shape[0])
 
     targetImg2 = cv2.imread("images/p1Rank2.png")
     frame2sizeX = int(targetImg2.shape[1])
@@ -47,25 +43,9 @@ def keep_score_in_smash(capture_index=0):
     vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
     print("Play ball!")
-    hasWinner = False
     knowsWinner = False
+    screenBlanked = False
     winner = -1
-
-    # Scan for end screen to appear
-    while not hasWinner:
-        # Capture the video frame
-        # by frame
-        ret, frame = vid.read()
-        frame = frame[frame.shape[0] - bottomleftSizeY:frame.shape[0], 0:bottomleftSizeX]
-        if not np.bitwise_xor(frame, targetImg1).any():
-            hasWinner = True
-            winner = 2
-        else:
-            time.sleep(0.1)
-
-    print("Game over!")
-    increment_file("sharedInfo/gameCount.txt")
-
     frame1offX = 745
     frame1offY = 50
     frame2offX = 1535
@@ -73,7 +53,6 @@ def keep_score_in_smash(capture_index=0):
     # Find who took second place
     while not knowsWinner:
         # Capture the video frame
-        # by frame
         ret, frame = vid.read()
         frame1 = frame[frame1offY:frame1offY + frame2sizeY, frame1offX:frame1offX + frame2sizeX]
         frame2 = frame[frame1offY:frame1offY + frame2sizeY, frame2offX:frame2offX + frame2sizeX]
@@ -84,8 +63,15 @@ def keep_score_in_smash(capture_index=0):
             knowsWinner = True
             winner = 1
 
+    # wait for screen to blank
+    while not screenBlanked:
+        ret, frame = vid.read()
+        if cv2.countNonZero(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)) == 0:
+            screenBlanked = True
+
+    increment_file("sharedInfo/gameCount.txt")
     winStr = "P" + str(winner)
-    print(winStr)
+    print(winStr + " wins!")
     winnerPath = "sharedInfo/" + winStr + ".txt"
     increment_file(winnerPath)
 
@@ -100,6 +86,6 @@ if __name__ == "__main__":
     print(sys.argv)
     if len(sys.argv) >= 2:
         cam_index = sys.argv[2]
-    init_scoreFiles()
+    init_score_files()
     while True:
         keep_score_in_smash(cam_index)
